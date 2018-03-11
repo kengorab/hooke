@@ -1,10 +1,13 @@
 package co.kenrg.hooke.application;
 
+import static co.kenrg.hooke.application.DependencyCollectors.getDependencyUnitForComponent;
+
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 
 import co.kenrg.hooke.annotations.Component;
+import co.kenrg.hooke.application.graph.DependencyUnit;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.ClassPath;
@@ -32,6 +35,9 @@ public class Application {
             }
         }
 
-        System.out.println(componentClasses);
+        for (Class componentClass : componentClasses) {
+            DependencyUnit dependencyUnit = getDependencyUnitForComponent(componentClass);
+            System.out.println(dependencyUnit);
+        }
     }
 }
