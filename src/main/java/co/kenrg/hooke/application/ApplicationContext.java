@@ -9,6 +9,10 @@ import com.google.common.collect.Maps;
 public class ApplicationContext {
     private final Map<Class, Object> applicationContext = Maps.newHashMap();
 
+    public void insert(Class clazz, Object instance) {
+        applicationContext.put(clazz, instance);
+    }
+
     public List<Object> getBeansOfTypes(List<Class> classes) {
         List<Object> beans = Lists.newArrayList();
         for (Class clazz : classes) {
@@ -21,7 +25,7 @@ public class ApplicationContext {
         return beans;
     }
 
-    public void insert(Class clazz, Object instance) {
-        applicationContext.put(clazz, instance);
+    public <T> T getBeanOfType(Class<T> clazz) {
+        return (T) getBeansOfTypes(Lists.newArrayList(clazz)).get(0);
     }
 }

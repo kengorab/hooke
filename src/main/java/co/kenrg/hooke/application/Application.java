@@ -21,7 +21,7 @@ import com.google.common.reflect.ClassPath.ClassInfo;
 public class Application {
     private final Class appClass;
     private final Set<Class> componentClasses = Sets.newHashSet();
-    private final ApplicationContext applicationContext = new ApplicationContext();
+    public final ApplicationContext applicationContext = new ApplicationContext();
 
     public Application(Class appClass) {
         this.appClass = appClass;

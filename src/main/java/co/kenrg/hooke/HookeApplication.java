@@ -3,6 +3,7 @@ package co.kenrg.hooke;
 import java.io.IOException;
 
 import co.kenrg.hooke.application.Application;
+import co.kenrg.hooke.application.ApplicationContext;
 
 public class HookeApplication {
     private static Application INSTANCE;
@@ -14,5 +15,9 @@ public class HookeApplication {
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    public static ApplicationContext getApplicationContext() {
+        return INSTANCE.applicationContext;
     }
 }
