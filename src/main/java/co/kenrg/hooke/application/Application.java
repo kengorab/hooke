@@ -1,21 +1,27 @@
 package co.kenrg.hooke.application;
 
 import static co.kenrg.hooke.application.DependencyCollectors.getDependencyUnitForComponent;
+import static co.kenrg.hooke.application.graph.DependencyGraph.buildDependencyGraph;
+import static co.kenrg.hooke.application.graph.DependencyGraph.resolveDependencyGraph;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.List;
 import java.util.Set;
 
 import co.kenrg.hooke.annotations.Component;
 import co.kenrg.hooke.application.graph.DependencyUnit;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.graph.Graph;
 import com.google.common.reflect.ClassPath;
 import com.google.common.reflect.ClassPath.ClassInfo;
 
 public class Application {
     private final Class appClass;
     private final Set<Class> componentClasses = Sets.newHashSet();
+    private final ApplicationContext applicationContext = new ApplicationContext();
 
     public Application(Class appClass) {
         this.appClass = appClass;
@@ -35,9 +41,12 @@ public class Application {
             }
         }
 
+        List<DependencyUnit> dependencies = Lists.newArrayList();
         for (Class componentClass : componentClasses) {
-            DependencyUnit dependencyUnit = getDependencyUnitForComponent(componentClass);
-            System.out.println(dependencyUnit);
+            dependencies.add(getDependencyUnitForComponent(componentClass, applicationContext::getBeansOfTypes));
         }
+
+        Graph<DependencyUnit> graph = buildDependencyGraph(dependencies);
+        resolveDependencyGraph(graph, applicationContext::insert);
     }
 }
