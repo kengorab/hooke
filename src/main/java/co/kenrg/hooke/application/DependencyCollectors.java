@@ -1,6 +1,7 @@
 package co.kenrg.hooke.application;
 
-import java.lang.annotation.Annotation;
+import static co.kenrg.hooke.util.Annotations.getAnnotations;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -10,6 +11,7 @@ import java.util.Map;
 import co.kenrg.hooke.annotations.Autowired;
 import co.kenrg.hooke.application.graph.DependencyUnit;
 import co.kenrg.hooke.application.iface.DependencyInstanceGetter;
+import co.kenrg.hooke.util.Annotations;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang3.tuple.Pair;
@@ -21,14 +23,8 @@ public class DependencyCollectors {
 
         Map<Field, Pair<String, Class>> fields = Maps.newHashMap();
         for (Field field : componentClass.getDeclaredFields()) {
-            Autowired autowiredAnn = null;
-
-            for (Annotation annotation : field.getAnnotations()) {
-                if (annotation.annotationType().equals(Autowired.class)) {
-                    autowiredAnn = (Autowired) annotation;
-                    break;
-                }
-            }
+            Annotations annotations = getAnnotations(field::getAnnotations);
+            Autowired autowiredAnn = annotations.get(Autowired.class);
 
             if (autowiredAnn != null) {
                 Class<?> fieldType = field.getType();
