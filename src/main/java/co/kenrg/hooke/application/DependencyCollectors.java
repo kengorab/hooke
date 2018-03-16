@@ -1,14 +1,19 @@
 package co.kenrg.hooke.application;
 
 import static co.kenrg.hooke.util.Annotations.getAnnotations;
+import static java.util.stream.Collectors.toList;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import co.kenrg.hooke.annotations.Autowired;
+import co.kenrg.hooke.annotations.Bean;
 import co.kenrg.hooke.application.graph.DependencyUnit;
 import co.kenrg.hooke.application.iface.DependencyInstanceGetter;
 import co.kenrg.hooke.util.Annotations;
@@ -62,5 +67,63 @@ public class DependencyCollectors {
                 }
             }
         );
+    }
+
+    public static List<DependencyUnit> getDependencyUnitsForBeanMethods(Set<Class> configClasses, DependencyInstanceGetter dependencyInstanceGetter) {
+        List<DependencyUnit> units = Lists.newArrayList();
+        for (Class configClass : configClasses) {
+            final Object instance = instantiateClass(configClass);
+
+            for (Method method : configClass.getMethods()) {
+                boolean hasBean = getAnnotations(method::getAnnotations).contains(Bean.class);
+
+                if (hasBean) {
+                    if (method.getReturnType() == Void.TYPE) {
+                        throw new IllegalStateException("Method " + method + " given @Bean annotation, but returns void!");
+                    }
+
+                    final List<Pair<String, Class>> dependencies = getDependenciesFromParameters(method.getParameters());
+                    List<Class> dependencyClasses = dependencies.stream().map(Pair::getRight).collect(toList());
+
+                    DependencyUnit dependencyUnit = new DependencyUnit(
+                        method.getName(),
+                        method.getReturnType(),
+                        dependencies,
+                        () -> {
+                            try {
+                                List<Object> args = dependencyInstanceGetter.getDependencyInstances(dependencyClasses);
+                                return method.invoke(instance, args.toArray());
+                            } catch (IllegalAccessException | InvocationTargetException e) {
+                                throw new IllegalStateException("Could not invoke method " + method, e);
+                            }
+                        }
+                    );
+                    units.add(dependencyUnit);
+                }
+            }
+        }
+        return units;
+    }
+
+    private static Object instantiateClass(Class configClass) {
+        for (Constructor constructor : configClass.getConstructors()) {
+            if (constructor.getParameterCount() == 0) {
+                try {
+                    return constructor.newInstance();
+                } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
+                    throw new IllegalStateException("Could not invoke constructor " + constructor, e);
+                }
+            }
+        }
+
+        throw new IllegalStateException("No default no-args constructor for class: " + configClass);
+    }
+
+    private static List<Pair<String, Class>> getDependenciesFromParameters(Parameter[] parameters) {
+        List<Pair<String, Class>> dependencies = Lists.newArrayList();
+        for (Parameter parameter : parameters) {
+            dependencies.add(Pair.of(null, parameter.getType()));
+        }
+        return dependencies;
     }
 }
