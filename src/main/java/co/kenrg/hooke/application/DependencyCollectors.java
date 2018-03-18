@@ -1,7 +1,6 @@
 package co.kenrg.hooke.application;
 
 import static co.kenrg.hooke.util.Annotations.getAnnotations;
-import static java.util.stream.Collectors.toList;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -14,6 +13,7 @@ import java.util.Set;
 
 import co.kenrg.hooke.annotations.Autowired;
 import co.kenrg.hooke.annotations.Bean;
+import co.kenrg.hooke.annotations.Qualifier;
 import co.kenrg.hooke.application.graph.DependencyUnit;
 import co.kenrg.hooke.application.iface.DependencyInstanceGetter;
 import co.kenrg.hooke.util.Annotations;
@@ -30,20 +30,20 @@ public class DependencyCollectors {
         for (Field field : componentClass.getDeclaredFields()) {
             Annotations annotations = getAnnotations(field::getAnnotations);
             Autowired autowiredAnn = annotations.get(Autowired.class);
+            Qualifier qualifierAnn = annotations.get(Qualifier.class);
 
             if (autowiredAnn != null) {
-                Class<?> fieldType = field.getType();
-                String fieldName = field.getName();
-
-                Pair<String, Class> depPair = Pair.of(fieldName, fieldType);
-                fields.put(field, depPair);
+                String depName = qualifierAnn != null && !qualifierAnn.value().isEmpty()
+                    ? qualifierAnn.value()
+                    : null;
+                fields.put(field, Pair.of(depName, field.getType()));
             }
         }
 
         dependencies.addAll(fields.values());
 
         return new DependencyUnit(
-            componentClass.getName(),
+            null,
             componentClass,
             dependencies,
             () -> {
@@ -54,9 +54,8 @@ public class DependencyCollectors {
                     for (Map.Entry<Field, Pair<String, Class>> entry : fields.entrySet()) {
                         Field field = entry.getKey();
                         Pair<String, Class> dependency = entry.getValue();
-                        Class depType = dependency.getValue();
 
-                        Object value = dependencyInstanceGetter.getDependencyInstances(Lists.newArrayList(depType)).get(0);
+                        Object value = dependencyInstanceGetter.getDependencyInstances(Lists.newArrayList(dependency)).get(0);
                         if (!field.isAccessible()) field.setAccessible(true);
                         field.set(instance, value);
                     }
@@ -83,7 +82,6 @@ public class DependencyCollectors {
                     }
 
                     final List<Pair<String, Class>> dependencies = getDependenciesFromParameters(method.getParameters());
-                    List<Class> dependencyClasses = dependencies.stream().map(Pair::getRight).collect(toList());
 
                     DependencyUnit dependencyUnit = new DependencyUnit(
                         method.getName(),
@@ -91,7 +89,7 @@ public class DependencyCollectors {
                         dependencies,
                         () -> {
                             try {
-                                List<Object> args = dependencyInstanceGetter.getDependencyInstances(dependencyClasses);
+                                List<Object> args = dependencyInstanceGetter.getDependencyInstances(dependencies);
                                 return method.invoke(instance, args.toArray());
                             } catch (IllegalAccessException | InvocationTargetException e) {
                                 throw new IllegalStateException("Could not invoke method " + method, e);

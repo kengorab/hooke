@@ -1,31 +1,48 @@
 package co.kenrg.hooke.application;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.tuple.Pair;
 
 public class ApplicationContext {
-    private final Map<Class, Object> applicationContext = Maps.newHashMap();
+    private final Map<Class, Object> allBeans = Maps.newHashMap();
+    private final Map<String, Object> namedBeans = Maps.newHashMap();
 
-    public void insert(Class clazz, Object instance) {
-        applicationContext.put(clazz, instance);
+    public void insert(Class clazz, @Nullable String name, Object instance) {
+        allBeans.put(clazz, instance);
+        if (name != null) {
+            namedBeans.put(name, instance);
+        }
     }
 
-    public List<Object> getBeansOfTypes(List<Class> classes) {
-        List<Object> beans = Lists.newArrayList();
-        for (Class clazz : classes) {
-            if (applicationContext.containsKey(clazz)) {
-                beans.add(applicationContext.get(clazz));
+    public List<Object> getBeans(List<Pair<String, Class>> beans) {
+        List<Object> values = Lists.newArrayList();
+        for (Pair<String, Class> pair : beans) {
+            Object instance;
+            String errMsg;
+            if (pair.getLeft() == null) {
+                instance = allBeans.get(pair.getRight());
+                errMsg = "No bean available of type " + pair.getRight();
             } else {
-                throw new IllegalStateException("No bean available of type " + clazz);
+                instance = namedBeans.get(pair.getLeft());
+                errMsg = "No bean available for name " + pair.getLeft();
             }
+
+            if (instance == null) {
+                throw new IllegalStateException(errMsg);
+            }
+
+            values.add(instance);
         }
-        return beans;
+
+        return values;
     }
 
     public <T> T getBeanOfType(Class<T> clazz) {
-        return (T) getBeansOfTypes(Lists.newArrayList(clazz)).get(0);
+        return (T) allBeans.get(clazz);
     }
 }

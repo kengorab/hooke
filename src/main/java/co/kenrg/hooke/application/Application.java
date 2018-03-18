@@ -45,10 +45,10 @@ public class Application {
 
         List<DependencyUnit> dependencies = Lists.newArrayList();
 
-        dependencies.addAll(getDependencyUnitsForBeanMethods(configClasses, applicationContext::getBeansOfTypes));
+        dependencies.addAll(getDependencyUnitsForBeanMethods(configClasses, applicationContext::getBeans));
 
         for (Class componentClass : componentClasses) {
-            dependencies.add(getDependencyUnitForComponent(componentClass, applicationContext::getBeansOfTypes));
+            dependencies.add(getDependencyUnitForComponent(componentClass, applicationContext::getBeans));
         }
 
         Graph<DependencyUnit> graph = buildDependencyGraph(dependencies);
