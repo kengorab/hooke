@@ -2,6 +2,7 @@ package co.kenrg.hooke.config;
 
 import co.kenrg.hooke.annotations.Bean;
 import co.kenrg.hooke.annotations.Configuration;
+import co.kenrg.hooke.annotations.Qualifier;
 import co.kenrg.hooke.components.Component2;
 import co.kenrg.hooke.components.Component3;
 
@@ -14,8 +15,13 @@ public class Configuration1 {
     }
 
     @Bean
-    public String greeting() {
-        return "Howdy";
+    public String exclamation() {
+        return "!";
+    }
+
+    @Bean
+    public String greeting(@Qualifier("exclamation") String exclamation) {
+        return "Howdy" + exclamation;
     }
 
     @Bean

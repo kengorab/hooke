@@ -120,7 +120,12 @@ public class DependencyCollectors {
     private static List<Pair<String, Class>> getDependenciesFromParameters(Parameter[] parameters) {
         List<Pair<String, Class>> dependencies = Lists.newArrayList();
         for (Parameter parameter : parameters) {
-            dependencies.add(Pair.of(null, parameter.getType()));
+            Annotations annotations = getAnnotations(parameter::getAnnotations);
+            Qualifier qAnn = annotations.get(Qualifier.class);
+            String name = (qAnn != null && !qAnn.value().isEmpty())
+                ? qAnn.value()
+                : null;
+            dependencies.add(Pair.of(name, parameter.getType()));
         }
         return dependencies;
     }
