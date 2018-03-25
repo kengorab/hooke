@@ -26,6 +26,13 @@ public class DependencyCollectors {
     public static DependencyUnit getDependencyUnitForComponent(Class componentClass, DependencyInstanceGetter dependencyInstanceGetter) {
         List<Pair<String, Class>> dependencies = Lists.newArrayList();
 
+        Constructor[] constructors = componentClass.getConstructors();
+        if (constructors.length > 1) {
+            throw new IllegalStateException("Cannot instantiate class with no default constructor: " + componentClass);
+        }
+        Constructor constructor = constructors[0];
+        List<Pair<String, Class>> constructorDependencies = getDependenciesFromParameters(constructor.getParameters());
+
         Map<Field, Pair<String, Class>> fields = Maps.newHashMap();
         for (Field field : componentClass.getDeclaredFields()) {
             Annotations annotations = getAnnotations(field::getAnnotations);
@@ -41,6 +48,7 @@ public class DependencyCollectors {
         }
 
         dependencies.addAll(fields.values());
+        dependencies.addAll(constructorDependencies);
 
         return new DependencyUnit(
             null,
@@ -48,8 +56,8 @@ public class DependencyCollectors {
             dependencies,
             () -> {
                 try {
-                    Constructor constructor = componentClass.getConstructors()[0];
-                    Object instance = constructor.newInstance();
+                    List<Object> constructorParameters = dependencyInstanceGetter.getDependencyInstances(constructorDependencies);
+                    Object instance = constructor.newInstance(constructorParameters.toArray());
 
                     for (Map.Entry<Field, Pair<String, Class>> entry : fields.entrySet()) {
                         Field field = entry.getKey();
