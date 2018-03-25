@@ -1,12 +1,12 @@
 package co.kenrg.hooke.application;
 
 import static co.kenrg.hooke.util.Annotations.getAnnotations;
+import static co.kenrg.hooke.util.Parameters.getDependenciesFromParameters;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -123,18 +123,5 @@ public class DependencyCollectors {
         }
 
         throw new IllegalStateException("No default no-args constructor for class: " + configClass);
-    }
-
-    private static List<Pair<String, Class>> getDependenciesFromParameters(Parameter[] parameters) {
-        List<Pair<String, Class>> dependencies = Lists.newArrayList();
-        for (Parameter parameter : parameters) {
-            Annotations annotations = getAnnotations(parameter::getAnnotations);
-            Qualifier qAnn = annotations.get(Qualifier.class);
-            String name = (qAnn != null && !qAnn.value().isEmpty())
-                ? qAnn.value()
-                : null;
-            dependencies.add(Pair.of(name, parameter.getType()));
-        }
-        return dependencies;
     }
 }

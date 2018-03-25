@@ -1,6 +1,7 @@
 package co.kenrg.hooke.application;
 
 import javax.annotation.Nullable;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -19,7 +20,7 @@ public class ApplicationContext {
         }
     }
 
-    public List<Object> getBeans(List<Pair<String, Class>> beans) {
+    public List<Object> getBeans(Collection<Pair<String, Class>> beans) {
         List<Object> values = Lists.newArrayList();
         for (Pair<String, Class> pair : beans) {
             Object instance;
@@ -36,6 +37,19 @@ public class ApplicationContext {
                 throw new IllegalStateException(errMsg);
             }
 
+            values.add(instance);
+        }
+
+        return values;
+    }
+
+    public List<Object> getBeansOfTypes(Collection<Class> types) {
+        List<Object> values = Lists.newArrayList();
+        for (Class type : types) {
+            Object instance = allBeans.get(type);
+            if (instance == null) {
+                throw new IllegalStateException("No bean available of type " + type);
+            }
             values.add(instance);
         }
 
