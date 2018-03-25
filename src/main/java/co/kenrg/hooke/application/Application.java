@@ -3,6 +3,7 @@ package co.kenrg.hooke.application;
 import static co.kenrg.hooke.application.DependencyCollectors.getDependencyUnitForComponent;
 import static co.kenrg.hooke.application.DependencyCollectors.getDependencyUnitsForBeanMethods;
 import static co.kenrg.hooke.application.DependencyPostSetupHandlers.invokeAutowiredMethodsForBeans;
+import static co.kenrg.hooke.application.DependencyPostSetupHandlers.invokePostConstructMethodsForBeans;
 import static co.kenrg.hooke.application.graph.DependencyGraph.buildDependencyGraph;
 import static co.kenrg.hooke.application.graph.DependencyGraph.resolveDependencyGraph;
 import static co.kenrg.hooke.util.Annotations.getAnnotations;
@@ -57,5 +58,6 @@ public class Application {
 
         List<Object> allInstances = applicationContext.getBeansOfTypes(componentClasses);
         invokeAutowiredMethodsForBeans(allInstances, applicationContext::getBeans);
+        invokePostConstructMethodsForBeans(allInstances);
     }
 }
